@@ -10,13 +10,15 @@
 // `MoreMenu` dropdown on the three-dots button. Right-click is left to
 // the browser so "Open in new tab" etc. keep working.
 import {
+  computed,
   defineAsyncComponent,
   onBeforeUnmount,
   onMounted,
   provide,
   ref,
 } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import { ROUTES } from "@/plugins/router";
 import storeCollections from "@/stores/collections";
 import storePlatforms from "@/stores/platforms";
 import AppNav from "@/v2/components/AppShell/AppNav.vue";
@@ -95,7 +97,15 @@ provide(BACKGROUND_ART_KEY, setBackgroundArt);
 const { install: installInputModality } = useInputModality();
 const { install: installGamepad } = useGamepad();
 const { install: installGlobalHotkeys } = useGlobalHotkeys();
+const route = useRoute();
 const router = useRouter();
+
+// The fixed application navigation obscures EmulatorJS controls and error
+// messages on phones. Player routes own the full viewport, so remove all app
+// chrome rather than relying on the browser's inconsistent fullscreen support.
+const isPlayerRoute = computed(
+  () => route.name === ROUTES.EMULATORJS || route.name === ROUTES.RUFFLE,
+);
 
 let removeBackMorph: (() => void) | null = null;
 
@@ -148,11 +158,16 @@ onBeforeUnmount(() => {
     />
 
     <div class="r-v2-shell__app">
-      <AppNav />
-      <main id="r-v2-main" class="r-v2-shell__main" tabindex="-1">
+      <AppNav v-if="!isPlayerRoute" />
+      <main
+        id="r-v2-main"
+        class="r-v2-shell__main"
+        :class="{ 'r-v2-shell__main--player': isPlayerRoute }"
+        tabindex="-1"
+      >
         <router-view name="v2" />
       </main>
-      <BottomNav />
+      <BottomNav v-if="!isPlayerRoute" />
     </div>
 
     <GlobalDialogs />
@@ -203,5 +218,13 @@ onBeforeUnmount(() => {
    totals still sum to one viewport with no document overflow. */
 html[data-bp~="sm-and-down"] .r-v2-shell__main {
   padding-bottom: calc(var(--r-bottom-nav-h) + env(safe-area-inset-bottom));
+}
+
+/* Player views own the viewport. Remove space reserved for both navigation
+   bars when their chrome is unmounted, including on iOS pseudo-fullscreen. */
+.r-v2-shell__main--player,
+html[data-bp~="sm-and-down"] .r-v2-shell__main--player {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 </style>
