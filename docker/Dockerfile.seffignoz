@@ -1,0 +1,17 @@
+# Build only the patched frontend, then overlay it on the exact upstream image
+# used in production. This preserves RomM's backend, bundled emulators, and
+# upstream build-time configuration while making the customization auditable.
+FROM --platform=$BUILDPLATFORM node:24.16-alpine@sha256:21f403ab171f2dc89bad4dd69d7721bfd15f084ccb46cdd225f31f2bc59b5c9a AS frontend-build
+WORKDIR /front
+
+COPY frontend/package*.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY frontend ./
+RUN npm run typecheck && npm run build
+
+FROM rommapp/romm:5.0.0@sha256:a57bb0d2d99b7eaf7b0853f009366395306b7a061f6ed39b35b66bc6838dd33d
+
+LABEL org.opencontainers.image.source="https://github.com/seffignoz/romm" \
+      org.opencontainers.image.description="RomM 5.0.0 with application navigation hidden on player routes"
+
+COPY --from=frontend-build /front/dist /var/www/html
