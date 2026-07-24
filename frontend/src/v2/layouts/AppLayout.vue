@@ -23,7 +23,6 @@ import storeCollections from "@/stores/collections";
 import storePlatforms from "@/stores/platforms";
 import AppNav from "@/v2/components/AppShell/AppNav.vue";
 import BackgroundArt from "@/v2/components/AppShell/BackgroundArt.vue";
-import BottomNav from "@/v2/components/AppShell/BottomNav.vue";
 import CrtOverlay from "@/v2/components/AppShell/CrtOverlay.vue";
 import GlobalDialogs from "@/v2/components/Dialogs/GlobalDialogs.vue";
 import SoundtrackMiniPlayer from "@/v2/components/Soundtrack/MiniPlayer.vue";
@@ -167,7 +166,6 @@ onBeforeUnmount(() => {
       >
         <router-view name="v2" />
       </main>
-      <BottomNav v-if="!isPlayerRoute" />
     </div>
 
     <GlobalDialogs />
@@ -210,21 +208,10 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
-/* On sm-and-down the fixed bottom tab bar (BottomNav) overlays the
-   bottom edge — reserve its height (+ safe-area inset) so natural-flow
-   views (Home, Settings, Library Tools, …) can scroll their last content
-   clear of the bar. Fixed-height views with their own internal scroll
-   (galleries) subtract the same amount from their height calc so the
-   totals still sum to one viewport with no document overflow. */
-html[data-bp~="sm-and-down"] .r-v2-shell__main {
-  padding-bottom: calc(var(--r-bottom-nav-h) + env(safe-area-inset-bottom));
-}
-
-/* Player views own the viewport. Remove space reserved for both navigation
-   bars when their chrome is unmounted, including on iOS pseudo-fullscreen. */
-.r-v2-shell__main--player,
-html[data-bp~="sm-and-down"] .r-v2-shell__main--player {
+/* Player views own the viewport. Remove space reserved for the top
+   navigation when its chrome is unmounted, including on iOS pseudo-fullscreen.
+   The mobile BottomNav is intentionally not mounted anywhere in this build. */
+.r-v2-shell__main--player {
   padding-top: 0;
-  padding-bottom: 0;
 }
 </style>
