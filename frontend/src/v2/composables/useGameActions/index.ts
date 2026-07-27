@@ -178,23 +178,22 @@ export function useGameActions(
   function play() {
     const rom = getRom();
     if (!rom) return;
-    // The launch "load" flourish (disc/cartridge insert) lives on the
-    // player view itself — see EmulatorJS's onPlay — so navigation is
-    // immediate here.
-    let path: string | null = null;
-    if (canPlayEJS.value) path = `/rom/${rom.id}/ejs`;
-    else if (canPlayRuffle.value) path = `/rom/${rom.id}/ruffle`;
-    if (!path) return;
-    const target = path;
-    // When the caller supplies a cover element (the gallery card / detail
-    // hero), morph it into the player's hero cover — same `rom-cover-<id>`
-    // tag the player paints statically. Degrades to a plain push where view
-    // transitions aren't available.
+
+    if (canPlayEJS.value) {
+      // EmulatorJS cores such as DOSBox Pure require cross-origin isolation
+      // for SharedArrayBuffer. Those COOP/COEP response headers are attached
+      // to the player document by nginx, so an SPA router push is insufficient:
+      // the browser must perform a real document navigation.
+      window.location.assign(`/rom/${rom.id}/ejs`);
+      return;
+    }
+
+    if (!canPlayRuffle.value) return;
+    const target = `/rom/${rom.id}/ruffle`;
+    // Ruffle does not require player-only response headers, so retain the
+    // shared-cover SPA transition for Flash games.
     const el = options.coverEl?.();
     if (el) {
-      // Await the push inside the transition so the browser snapshots the
-      // player view *after* it has rendered its hero cover (which carries the
-      // same `rom-cover-<id>` tag) — otherwise there's no element to morph to.
       morphTransition({ el, name: `rom-cover-${rom.id}` }, async () => {
         await router.push(target);
       });
