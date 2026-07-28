@@ -6,6 +6,7 @@ on:
     paths:
       - frontend/**
       - docker/Dockerfile.seffignoz
+      - docker/patch-emulatorjs-dosbox.py
       - .github/workflows/build-seffignoz.yaml
   workflow_dispatch:
 

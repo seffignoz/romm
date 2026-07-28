@@ -15,3 +15,8 @@ LABEL org.opencontainers.image.source="https://github.com/seffignoz/romm" \
       org.opencontainers.image.description="RomM 5.0.0 with application navigation hidden on player routes"
 
 COPY --from=frontend-build /front/dist /var/www/html
+
+# EmulatorJS 4.2.3 treats a recoverable DOSBox Pure callMain exception as a
+# fatal startup failure even though the worker continues booting the game.
+COPY docker/patch-emulatorjs-dosbox.py /tmp/patch-emulatorjs-dosbox.py
+RUN python3 /tmp/patch-emulatorjs-dosbox.py && rm /tmp/patch-emulatorjs-dosbox.py
